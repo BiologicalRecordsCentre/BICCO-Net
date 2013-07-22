@@ -12,7 +12,7 @@ rm(list=ls())    # clear R
 ############################################################################## FIND DATA
 
 # Option A: data are stored locally in a folder on the same level as the folder containing the RStudio project
-datadir <- '../FineScaleData'
+datadir <- '../Data'
 
 # Option B: point to the Dropbox folder. The user should uncomment the appropriate line
 #datadir <- 'C:\\Documents and Settings\\GAWN\\My Documents\\My Dropbox\\BICCO-Net' #Gary
@@ -36,7 +36,6 @@ sp58 <- merge(sp58,fake_fourier,by.x=c("SITE","YEAR",by.y=c("SITE","YEAR")))		# 
 # 1. species-specific fourier covariates 
 # 2. local P & T
 ############# 
-
 
 ###  Mixed effects models 
 library(lme4)
