@@ -1,18 +1,30 @@
 ###### BICCO-Net fine scale analysis ######
-###### G Powney, July 2013 #######
+###### Gary Powney & Nick Isaac, July 2013 #######
+
+##############################################################################
+#
+# This is a template for the fine-scale analysis of population dynamics in response to climate change
+#
+##############################################################################
 
 rm(list=ls())    # clear R
 
-if(grepl('apple', R.version$platform)) {datadir <- '../BICCO-Net data'
-} else {datadir <- 'C:\\Documents and Settings\\GAWN\\My Documents\\My Dropbox\\BICCO-Net'}
+############################################################################## FIND DATA
 
-setwd(datadir)
+# Option A: data are stored locally in a folder on the same level as the folder containing the RStudio project
+datadir <- '../FineScaleData'
 
-### add data - Direct these to the BICCO-Net dropbox folder 		
-sp8 <- read.csv("species_8.csv",header=T) 					# add ringlet example
-sp58 <- read.csv("species_58.csv",header=T)					# add Silver-spotter Skipper example
-fake_fourier <- read.csv("fourier_example.csv",header=T)		# add in fake fourier data
-# the initial table will be coefficients, not net effect. To calculate (see below)
+# Option B: point to the Dropbox folder. The user should uncomment the appropriate line
+#datadir <- 'C:\\Documents and Settings\\GAWN\\My Documents\\My Dropbox\\BICCO-Net' #Gary
+#datadir <- 'C:/Documents and Settings/NJBI/My Documents/Dropbox/work/BICCO-Net data' # Nick work
+#datadir <- NULL # Blaise to add
+
+############################################################################## LOAD DATA
+
+sp8 <- read.csv(paste0(datadir,"/species_8.csv"),header=T) 					# add ringlet example
+sp58 <- read.csv(paste0(datadir,"/species_58.csv"),header=T)					# add Silver-spotter Skipper example
+fake_fourier <- read.csv(paste0(datadir,"/fourier_example.csv"),header=T)		# add in fake fourier data
+#the initial table will be coefficients, not net effect. To calculate (see below)
 
 
 ### Join fourier scores onto the species index data 
