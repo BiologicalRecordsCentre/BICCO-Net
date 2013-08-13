@@ -17,7 +17,7 @@ datadir <- '../Data'
 # Option B: point to the Dropbox folder. The user should uncomment the appropriate line
 #datadir <- 'C:\\Documents and Settings\\GAWN\\My Documents\\My Dropbox\\BICCO-Net' #Gary
 #datadir <- 'C:/Documents and Settings/NJBI/My Documents/Dropbox/work/BICCO-Net data' # Nick work
-#datadir <- NULL # Blaise to add
+datadir <- 'C:/Users/blaise/Dropbox/BICCO-Net' # Blaise to add
 
 ############################################################################## LOAD DATA
 
@@ -31,10 +31,61 @@ fake_fourier <- read.csv(paste0(datadir,"/fourier_example.csv"),header=T)		# add
 sp8 <- merge(sp8,fake_fourier,by.x=c("SITE","YEAR",by.y=c("SITE","YEAR")))			# for species 8
 sp58 <- merge(sp58,fake_fourier,by.x=c("SITE","YEAR",by.y=c("SITE","YEAR")))		# for species 58
 
-############# missing step
-#### caulculate LOCAL Temp and Precipitation effect from:
-# 1. species-specific fourier covariates 
-# 2. local P & T
+#################   caulculate LOCAL Temp and Precipitation effects:   #######################
+
+####### LOAD DATA and select species and site
+
+# 'transdata' is the final version
+# it is the national monthly mean and stdev of temp and prec from 1966 - 2011, going back to 1961 - 2006
+# spCovariates: once we have the final version fron BioSS this will be final
+transdata<-read.table(paste0(datadir,"/Climate transformation/transdata.txt"),header=T)
+spCovariates<-read.table(paste0(datadir,"/Climate transformation/spCovariates.txt"),header=T)
+
+### Inputting species and site:
+sp<-431 #change to species required - I've put list of codes for butterflies in drop box
+spname<-spCovariates[sp,1];spname
+site<-1 # will be needed later on to select local temperature
+
+# Fake weather data: will need to be changed to site-specific local weather eventually
+fakeweather<-read.table(paste0(datadir,"/Climate transformation/fake_weather.txt"),header=T)
+attach(fakeweather) 
+
+########################################################################
+
+### converting local climate into difference from national averages:
+climate<-fakeweather
+climate1<-cbind(climate[2:51,7],climate[2:51,6],climate[2:51,5],climate[2:51,4],climate[2:51,3],climate[2:51,2],climate[1:50,13],climate[1:50,12],climate[1:50,11],climate[1:50,10], climate[1:50,9],climate[1:50,8],climate[2:51,19],climate[2:51,18],climate[2:51,17],climate[2:51,16], climate[2:51,15],climate[2:51,14],climate[1:50,25], climate[1:50,24],climate[1:50,23],climate[1:50,22],climate[1:50,21],climate[1:50,20])
+climate2<-cbind(Year[6:51],climate1[5:50,1:12],climate1[4:49,1:12],climate1[3:48,1:12],climate1[2:47,1:12],climate1[1:46,1:12],climate1[5:50,13:24],climate1[4:49,13:24],climate1[3:48,13:24],climate1[2:47,13:24],climate1[1:46,13:24])                
+climate3<-matrix(0,46,120)
+for(i in 1:46){ for(j in 1:120){
+  climate3[i,j]<-(climate2[i,j+1]-transdata[1,j+1])/transdata[2,j+1]}}
+
+### getting species response to each month's weather then averaging for annual effect:
+weatherCovs<-matrix(0,46,120)
+for(i in 1:46){ for(j in 1:120){
+  weatherCovs[i,j]<-as.matrix(climate3[i,j]*spCovariates[sp,j+1])}}
+year<-c(1966:2011)
+temp<-rowMeans(weatherCovs[,1:60])
+precipitation<-rowMeans(weatherCovs[,61:120])
+
+annualweather<-as.data.frame(cbind(c(1966:2011),rowMeans(weatherCovs[,1:60]),rowMeans(weatherCovs[,61:120])))
+names(annualweather)<-c("year","temp","precipitation")
+attach(annualweather)
+
+
+###########################################################################
+### Missing step NEW:
+
+### 'temp' and 'precipitation' give the annual effect for species and site 
+### selected in lines 44:47 from 1966 - 2011. 
+### A loop will need to be added to produce these values for each site
+
+### select years required for glmers:
+### will need to be change to do it for each site
+TEMP1<-temp[match(sp8$YEAR[sp8$SITE==site],year)]
+PREC1<-precipitation[match(sp8$YEAR[sp8$SITE==site],year)]
+
+
 ############# 
 
 ###  Mixed effects models 
