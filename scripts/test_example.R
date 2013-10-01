@@ -21,7 +21,7 @@ datadir <- 'C:/Users/blaise/Dropbox/BICCO-Net' # Blaise to add
 
 ############################################################################## LOAD DATA
 
-sp8 <- read.csv(paste0(datadir,"/species_8.csv"),header=T) 					# add ringlet example
+sp8 <- read.csv(paste0(datadir,"/species_8.csv"),header=T)   				# add ringlet example
 sp58 <- read.csv(paste0(datadir,"/species_58.csv"),header=T)					# add Silver-spotter Skipper example
 fake_fourier <- read.csv(paste0(datadir,"/fourier_example.csv"),header=T)		# add in fake fourier data
 #the initial table will be coefficients, not net effect. To calculate (see below)
@@ -54,24 +54,28 @@ attach(fakeweather)
 
 ### converting local climate into difference from national averages:
 climate<-fakeweather
-climate1<-cbind(climate[2:51,7],climate[2:51,6],climate[2:51,5],climate[2:51,4],climate[2:51,3],climate[2:51,2],climate[1:50,13],climate[1:50,12],climate[1:50,11],climate[1:50,10], climate[1:50,9],climate[1:50,8],climate[2:51,19],climate[2:51,18],climate[2:51,17],climate[2:51,16], climate[2:51,15],climate[2:51,14],climate[1:50,25], climate[1:50,24],climate[1:50,23],climate[1:50,22],climate[1:50,21],climate[1:50,20])
-climate2<-cbind(Year[6:51],climate1[5:50,1:12],climate1[4:49,1:12],climate1[3:48,1:12],climate1[2:47,1:12],climate1[1:46,1:12],climate1[5:50,13:24],climate1[4:49,13:24],climate1[3:48,13:24],climate1[2:47,13:24],climate1[1:46,13:24])                
-climate3<-matrix(0,46,120)
-for(i in 1:46){ for(j in 1:120){
+climate1<-fakeweather[,c(13:2,25:14)]
+climate2<-cbind(Year[7:52],
+                climate1[6:51,1:12],climate1[5:50,1:12],climate1[4:49,1:12],
+                climate1[3:48,1:12],climate1[2:47,1:12],climate1[1:46,1:12],
+                climate1[6:51,13:24],climate1[5:50,13:24],climate1[4:49,13:24],
+                climate1[3:48,13:24],climate1[2:47,13:24],climate1[1:46,13:24])                
+climate3<-matrix(0,46,144)
+for(i in 1:46){ for(j in 1:144){
   climate3[i,j]<-(climate2[i,j+1]-transdata[1,j+1])/transdata[2,j+1]}}
 
 ### getting species response to each month's weather then averaging for annual effect:
-weatherCovs<-matrix(0,46,120)
-for(i in 1:46){ for(j in 1:120){
+weatherCovs<-matrix(0,46,144)
+for(i in 1:46){ for(j in 1:144){
   weatherCovs[i,j]<-as.matrix(climate3[i,j]*spCovariates[sp,j+1])}}
 year<-c(1966:2011)
-temp<-rowMeans(weatherCovs[,1:60])
-precipitation<-rowMeans(weatherCovs[,61:120])
 
-annualweather<-as.data.frame(cbind(c(1966:2011),rowMeans(weatherCovs[,1:60]),rowMeans(weatherCovs[,61:120])))
+temp<-rowMeans(weatherCovs[,(13-spCovariates[sp,146]):(72-spCovariates[sp,146])])
+precipitation<-rowMeans(weatherCovs[,((13-spCovariates[sp,146]):(72-spCovariates[sp,146])+72)])
+
+annualweather<-as.data.frame(cbind(c(1966:2011),temp,precipitation))
 names(annualweather)<-c("year","temp","precipitation")
 attach(annualweather)
-
 
 ###########################################################################
 ### Missing step NEW:
