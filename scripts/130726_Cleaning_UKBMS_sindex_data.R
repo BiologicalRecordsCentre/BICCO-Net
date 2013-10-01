@@ -74,5 +74,7 @@ for (i in spp){
   
 } # close the species loop
 
+head(new_recs)
 
 
+write.csv(new_recs,file=paste0(datadir,"/cleaned_UKBMS_site_indices.txt"),row.names=F)
