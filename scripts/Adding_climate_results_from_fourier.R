@@ -30,11 +30,18 @@ spp_data <- spp_data[,c(1,4:5,6:8)]
 # it is the national monthly mean and stdev of temp and prec from 1966 - 2011, going back to 1961 - 2006
 # spCovariates: once we have the final version fron BioSS this will be final
 transdata <- read.table(paste0(datadir,"/transdata.txt"),header=T)
-spCovariates <- read.table(paste0(datadir,"/spCovariates.txt"),header=T)
+spCovariates <- read.table(paste0(datadir,"/spCovariates"),header=T)
 
-site_climate <- read.table(paste0(datadir,"/all.sites.CIP.mean.temp.AND.rainfall.1971_2012_running.3month.means.txt"),header=T,sep="\t") ### Add the site/ year climate data
-site_climate <- site_climate[site_climate$year<2012,] 
-names(site_climate)[4] <- "m_temp" # change problematic use of mean
+# NEED TO ADD THE BTO SITE CLIMATE DATA HERE IUNSTEAD OF UKBMS
+site_climate <- read.table(paste0(datadir,"/ukbms_site_CIP_climate.txt"),header=T,sep="\t") ### Add the UKBMS site/ year climate data
+
+names(site_climate)[3] <- "site"
+names(site_climate)[6] <- "m_temp" # change problematic use of mean
+names(site_climate)[4] <- "year" 
+names(site_climate)[5] <- "month" 
+names(site_climate)[7] <- "rainfall"
+
+site_climate <- site_climate[site_climate$year<2012&site_climate$year>1965,] # ensure only including site climate years of interest
 
 fakeweather<-read.table(paste0(datadir,"/fake_weather.txt"),header=T)  # just used for naming columns.
 
@@ -72,7 +79,7 @@ for (sp in as.character(spp_list[,"SPECIES"])){   # loop through each species
   
   for (si in site_list) {
     cat(si,"\n")
-    test <- site_climate[site_climate$site==si,c("year","month","m_temp","rainfall")] # ID the cliamte of the site in question
+    test <- site_climate[site_climate$site==si,c("year","month","m_temp","rainfall")] # ID the climate of the site in question
     temper <- dcast(test,year~month,value.var="m_temp")  # convert the site climate data to match the format needed by the code below
     preci <- dcast(test,year~month,value.var="rainfall")
     climate<-cbind(temper,preci[,-1])
