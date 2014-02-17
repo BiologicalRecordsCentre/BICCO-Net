@@ -60,7 +60,7 @@ spp_list <- read.csv(paste0(datadir,"/Fourier species codes for butterflies.csv"
 climate_impact <- data.frame(year=as.numeric(),temp=as.numeric(),precipitation=as.numeric(),SITE=as.numeric(),SPECIES=as.character())  # Create a dataframe to be filled
 
 # test #
-#sp <- as.character(spp_list[1,1])
+#sp <- as.character(spp_list[30,1])
 
 ## sort out the name differences ##
 levels(spp_list$NAME)[28]<-"Orange-tip"
@@ -71,11 +71,34 @@ levels(spp_list$NAME)[13]<-"Gatekeeper"
 #### MISSING SPECIES ####
 # "Small/Essex Skipper"  "Black Hairstreak"    "Lulworth Skipper"     "Large Heath"  "Mountain Ringlet"     "Cryptic Wood White"   "Chequered Skipper"    "Glanville Fritillary"
 
+### TEST ###
+# create a "national site" containing means across all sites use in place of test in second loop#
+#test <- site_climate[,4:7]
+#mean_site <- tapply(test$m_temp,list(year=test$year,month=test$month),mean,na.rm=TRUE)
+
+#mean_temp <- NULL
+#mean_rain <- NULL
+#YEAR <- NULL
+#MONTH <- NULL
+
+#for (i in unique(test$year)){
+# for (j in unique(test$month)){
+#   mean_temp <- c(mean_temp,mean(test[test$year==i&test$month==j,"m_temp"]))
+#   mean_rain <- c(mean_rain,mean(test[test$year==i&test$month==j,"rainfall"]))
+#   YEAR <- c(YEAR,i)
+#   MONTH <- c(MONTH,j)
+# } 
+#}
+
+#new_test <- data.frame(YEAR=YEAR,MONTH=MONTH,mean_temp=mean_temp,mean_rain=mean_rain)
+
 ######  For each species in spp_data we want to loop through each site where it has been recorded and use the climate data from Tom O to create the site/species/year climate effect. The table we create will include years where the species was not recorded but the excess years will be dropped when we merge the new cliamte impact data frame with the spp_data. ######
 for (sp in as.character(spp_list[,"SPECIES"])){   # loop through each species
   # loop through sites
   site_list <- unique(spp_data[spp_data$COMMON_NAME==as.character(spp_list[spp_list$SPECIES==sp,"NAME"]),"SITE"])  # create a vector of the sites where species "sp" was found.
   cat(sp,"\n")
+  
+  # si<-site_list[1] # test
   
   for (si in site_list) {
     cat(si,"\n")
@@ -87,27 +110,38 @@ for (sp in as.character(spp_list[,"SPECIES"])){   # loop through each species
     
     ### converting local climate into difference from national averages:
     climate1<-climate[,c(13:2,25:14)] # ensure this matches the format of "fakeweather"
-    climate2<-cbind(climate$Year[7:41],
-                climate1[6:40,1:12],climate1[5:39,1:12],climate1[4:38,1:12],
-                climate1[3:37,1:12],climate1[2:36,1:12],climate1[1:35,1:12],
-                climate1[6:40,13:24],climate1[5:39,13:24],climate1[4:38,13:24],
-                climate1[3:37,13:24],climate1[2:36,13:24],climate1[1:35,13:24])         # create a dataframe that has rows as years and columns of climate climate -1 year, climate -2 years... etc to -5       
+    climate2<-cbind(climate$Year[12:46],
+                    climate1[11:45,1:12],climate1[10:44,1:12],climate1[9:43,1:12],
+                    climate1[8:42,1:12],climate1[7:41,1:12],climate1[6:40,1:12],
+                    climate1[5:39,1:12],climate1[4:38,1:12],climate1[3:37,1:12],
+                    climate1[2:36,1:12],climate1[1:35,1:12],
+                    
+                    climate1[11:45,13:24],climate1[10:44,13:24],climate1[9:43,13:24],
+                    climate1[8:42,13:24],climate1[7:41,13:24],climate1[6:40,13:24],
+                    climate1[5:39,13:24],climate1[4:38,13:24],climate1[3:37,13:24],
+                    climate1[2:36,13:24],climate1[1:35,13:24])        # create a dataframe that has rows as years and columns of climate climate -1 year, climate -2 years... etc to -5 # UPDATE # to -10       
+    
     names(climate2)[1] <- "Year"
-    climate3<-matrix(0,35,144)
-    for(i in 1:35){ for(j in 1:144){
-      climate3[i,j]<-(climate2[i,j+1]-transdata[1,j+1])/transdata[2,j+1]}}                  # transdata are the monthly national means and SDs
-
+    
+    climate3<-matrix(0,46,264)
+    
+    for(i in 1:46){ for(j in 1:264){
+      climate3[i,j] <- (climate2[i,j+1]-transdata[1,j+1])/transdata[2,j+1]}}                  # transdata are the monthly national means and SDs
+    # climate3[i,j]<-(climate2[i,j+1]-transdata[1,j+1])/transdata[2,j+1]}}
     ### getting species response to each month's weather then averaging for annual effect:
-    weatherCovs<-matrix(0,35,144)
-    for(i in 1:35){ for(j in 1:144){
+    weatherCovs<-matrix(0,46,264)
+    
+    for(i in 1:46){ for(j in 1:264){
       weatherCovs[i,j]<-as.matrix(climate3[i,j]*spCovariates[spCovariates$species==sp,j+1])}}
-    year<-c(1977:2011)
+    
+    year<-c(1966:2011)
 
-    temp<-rowMeans(weatherCovs[,(13-spCovariates[spCovariates$species==sp,146]):(72-spCovariates[spCovariates$species==sp,146])])
-    precipitation<-rowMeans(weatherCovs[,((13-spCovariates[spCovariates$species==sp,146]):(72-spCovariates[spCovariates$species==sp,146])+72)])
+    ### sum across all years
+    temp<-rowSums(weatherCovs[,1:132])/120
+    precipitation<-rowSums(weatherCovs[,133:264])/120
 
-    annualweather<-as.data.frame(cbind(c(1977:2011),temp,precipitation))
-    names(annualweather) <- c("year","temp","precipitation")
+    annualweather<-as.data.frame(cbind(c(1966:2011),temp,precipitation))
+    names(annualweather)<-c("year","temp","precipitation")
     annualweather$SITE <- rep(si,nrow(annualweather))
     annualweather$SPECIES <- rep(sp,nrow(annualweather))
 
